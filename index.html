@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Location HSE Data Hub · Demo</title>
+<style>
+:root{
+  --navy:#0B2A55;--navy2:#123B73;--teal:#0F8B8D;--teal-l:#E3F4F4;
+  --green:#1E8E3E;--green-l:#E6F4EA;--red:#C62828;--red-l:#FDECEA;
+  --amber:#B26A00;--amber-l:#FFF4E0;--grey:#5F6B7A;--line:#E2E7EE;--bg:#F5F7FA;--card:#fff;--ink:#1B2430;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2) 60%,var(--teal));color:#fff;padding:22px 28px 18px}
+header h1{margin:0;font-size:24px;letter-spacing:.2px}
+header p{margin:4px 0 0;opacity:.85;font-size:13px}
+.badge-demo{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:8px;vertical-align:middle}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 22px 40px}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:-26px;box-shadow:0 4px 14px rgba(11,42,85,.08)}
+.controls label{display:flex;flex-direction:column;font-size:11px;color:var(--grey);font-weight:600;text-transform:uppercase;letter-spacing:.4px;gap:4px}
+.controls select,.controls input[type=number]{font:inherit;font-size:14px;padding:6px 8px;border:1px solid #C9D2DE;border-radius:8px;background:#fff;color:var(--ink);min-width:120px}
+.controls input[type=number]{width:84px;min-width:0}
+.controls .switch{flex-direction:row;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600;cursor:pointer;background:var(--amber-l);border:1px solid #F3D9A6;padding:7px 12px;border-radius:8px}
+.controls .switch input{width:16px;height:16px;accent-color:var(--teal)}
+.controls .switch.on{background:var(--green-l);border-color:#BFE3C9}
+.btn{font:inherit;font-size:13px;font-weight:600;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid #C9D2DE}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.tab:focus-visible{outline:3px solid #7FC4C5;outline-offset:2px}
+.spacer{flex:1}
+
+/* flow */
+.flow{display:grid;grid-template-columns:1.25fr auto 1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:stretch;margin:18px 0 8px}
+.fstep{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.fstep h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--teal)}
+.fstep .big{font-size:22px;font-weight:700;color:var(--navy)}
+.fstep .sm{font-size:12px;color:var(--grey)}
+.arrow{display:flex;align-items:center;color:#9AA7B6;font-size:22px}
+.srcs{display:flex;flex-direction:column;gap:4px}
+.src{display:flex;justify-content:space-between;gap:6px;font-size:12px;padding:3px 8px;border-radius:6px;background:#F1F4F8}
+.src b{font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--green-l);color:var(--green)}
+.p-bad{background:var(--red-l);color:var(--red)}
+.p-warn{background:var(--amber-l);color:var(--amber)}
+.p-info{background:#E8EEF7;color:var(--navy2)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin-top:16px}
+.tab{font:inherit;font-weight:600;font-size:14px;background:none;border:0;padding:10px 16px;color:var(--grey);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab[aria-selected=true]{color:var(--navy);border-bottom-color:var(--teal)}
+.panel{display:none;padding-top:16px}
+.panel.active{display:block}
+
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 10px;font-size:15px;color:var(--navy)}
+.card h3 small{font-weight:400;color:var(--grey);font-size:12px;margin-left:6px}
+.note{font-size:12px;color:var(--grey);margin:8px 0 0}
+.kpi .lbl{font-size:12px;color:var(--grey);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpi .val{font-size:30px;font-weight:700;color:var(--navy);margin:2px 0}
+.kpi .sub{font-size:12px;color:var(--grey);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.kpi.bad{border-left:5px solid var(--red)}
+.kpi.ok{border-left:5px solid var(--green)}
+.kpi.neutral{border-left:5px solid var(--navy2)}
+
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:var(--navy);color:#fff;font-weight:600;padding:7px 8px;text-align:center;font-size:12px;position:sticky;top:0;z-index:1}
+td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center}
+td.l,th.l{text-align:left}
+tr.tot td{background:#F1F4F8;font-weight:700}
+tr.reg td{background:var(--teal-l);font-weight:700}
+.tscroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px}
+.hl{background:var(--red-l)!important;color:var(--red);font-weight:700}
+.hl-w{background:var(--amber-l)!important;color:var(--amber);font-weight:700}
+.muted{color:#9AA7B6}
+.better{color:var(--green);font-weight:700}
+.worse{color:var(--red);font-weight:700}
+svg text{font-family:"Segoe UI",Roboto,Arial,sans-serif}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--grey);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.legend i.box{height:10px}
+.story{background:linear-gradient(90deg,#fff,var(--teal-l));border:1px solid #CDE9E9;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:13px}
+.story b{color:var(--navy)}
+.rules li{margin:6px 0}
+.rules code{background:#EEF2F7;padding:1px 6px;border-radius:4px;font-size:12.5px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.filters label{display:flex;flex-direction:column;font-size:11px;color:var(--grey);font-weight:600;gap:3px;text-transform:uppercase}
+.filters select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid #C9D2DE;border-radius:8px}
+footer{text-align:center;font-size:12px;color:var(--grey);padding:20px}
+@media (max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{justify-content:center;transform:rotate(90deg)}}
+@media (max-width:560px){.g4{grid-template-columns:1fr}.wrap{padding:12px}}
+@media print{
+  header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .controls .btn,.tabs{display:none}
+  .panel{display:block!important;page-break-before:always}
+  .tscroll{max-height:none;overflow:visible}
+  th{position:static}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Multi-Location HSE Data Hub <span class="badge-demo">DEMO · synthetic data</span></h1>
+  <p>One template for every location → automatic consolidation → data quality gate → one set of KPI rules → one regional report.</p>
+</header>
+
+<div class="wrap">
+  <div class="controls" role="group" aria-label="Report controls">
+    <label>Reporting month
+      <select id="selMonth"></select>
+    </label>
+    <label>View
+      <select id="selView"></select>
+    </label>
+    <label>LTIF target <input type="number" id="tLTIF" step="0.01" min="0" value="0.64"></label>
+    <label>TRIR target <input type="number" id="tTRIR" step="0.01" min="0" value="1.03"></label>
+    <label>Severity target <input type="number" id="tSR" step="0.1" min="0" value="7"></label>
+    <label class="switch" id="swFix"><input type="checkbox" id="chkFix"> Simulate: locations corrected their files</label>
+    <span class="spacer"></span>
+    <button class="btn ghost" type="button" id="btnPrint">Print / PDF</button>
+  </div>
+
+  <!-- Data flow -->
+  <div class="flow" id="flow" aria-live="polite"></div>
+  <div class="story" id="story"></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="check" type="button">① Data check</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="report" type="button">② Report</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="compare" type="button">③ Location comparison</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="data" type="button">④ Consolidated data</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="rules" type="button">⑤ How it works</button>
+  </div>
+
+  <!-- DATA CHECK -->
+  <section class="panel active" id="p-check">
+    <div class="card">
+      <h3>Is every location ready for the regional report? <small id="chkSummary"></small></h3>
+      <div class="tscroll" style="max-height:none"><table id="tblCheck"></table></div>
+      <p class="note">READY = no issues. CHECK = the location fixes its own file and the consolidation is refreshed. MISSING = no file received.
+        "Records after cut-off" and "Previous-year data" are information only. Red cells explain exactly what to fix — the regional owner never edits country data.</p>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>Hours worked received <small id="hrsTitle"></small></h3>
+        <div class="tscroll" style="max-height:none"><table id="tblHours"></table></div>
+        <p class="note">Blank hours = not reported, never treated as zero. Any missing month makes the rates of that scope <b>Provisional</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Why rows were not counted <small>reporting year, all locations</small></h3>
+        <div id="rejectChart"></div>
+        <p class="note">Rows stay in the consolidated data (traceable to the source file) but are excluded from KPIs with a visible reason.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section class="panel" id="p-report">
+    <div class="grid g4" id="kpis"></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card"><h3>LTIF <small>per 200,000 hours</small></h3><div id="chLTIF"></div>
+        <div class="legend"><span><i class="box" style="background:#9DB7D9"></i>Monthly LTIF</span><span><i style="background:var(--navy)"></i>YTD LTIF</span><span><i style="background:var(--red)"></i>Target</span><span><i style="background:#A0A8B3"></i>Previous-year YTD</span></div></div>
+      <div class="card"><h3>Severity rate <small>lost days per 200,000 hours</small></h3><div id="chSR"></div>
+        <div class="legend"><span><i class="box" style="background:#9FD3D4"></i>Monthly SR</span><span><i style="background:var(--teal)"></i>YTD SR</span><span><i style="background:var(--red)"></i>Target</span><span><i style="background:#A0A8B3"></i>Previous-year YTD</span></div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>Monthly summary <small id="monthlyTitle"></small></h3>
+      <div class="tscroll" style="max-height:none"><table id="tblMonthly"></table></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card"><h3>Pareto by risk family <small>YTD counted incidents</small></h3><div id="chPareto"></div>
+        <div class="legend"><span><i class="box" style="background:var(--navy2)"></i>Incidents</span><span><i style="background:var(--amber)"></i>Cumulative %</span><span><i style="background:var(--red)"></i>80% line</span></div></div>
+      <div class="card"><h3>Action status <small>raised up to cut-off</small></h3><div class="tscroll" style="max-height:none"><table id="tblActions"></table></div>
+        <div id="chActions" style="margin-top:10px"></div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3 id="yoyTitle">Year-on-year</h3>
+      <div class="tscroll" style="max-height:none"><table id="tblYoY"></table></div>
+      <p class="note">Same months in both years. Better/Worse only where lower is better (injuries, lost days, rates). Near Miss and Hazard reports show Up/Down — more reporting is not automatically bad.</p>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="panel" id="p-compare">
+    <div class="card">
+      <h3>Location comparison <small id="cmpTitle"></small></h3>
+      <div class="tscroll" style="max-height:none"><table id="tblCompare"></table></div>
+      <div class="story" id="avgWarn" style="margin-top:12px"></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card"><h3>LTIF YTD by location</h3><div id="chCmpLTIF"></div></div>
+      <div class="card"><h3>Severity rate YTD by location</h3><div id="chCmpSR"></div></div>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section class="panel" id="p-data">
+    <div class="card">
+      <h3>Consolidated data <small>what the consolidation produces from every source file</small></h3>
+      <div class="filters">
+        <label>Table <select id="fTable"><option value="inc">Incidents</option><option value="haz">Hazard actions</option><option value="hrs">Hours</option><option value="sub">Submissions</option></select></label>
+        <label>Location <select id="fLoc"></select></label>
+        <label>Year <select id="fYear"><option value="">All</option><option>2025</option><option selected>2026</option></select></label>
+        <label>Rows <select id="fCnt"><option value="">All</option><option value="1">Counted only</option><option value="0">Not counted only</option></select></label>
+        <span class="spacer"></span>
+        <button class="btn" type="button" id="btnCsv">Download CSV</button>
+      </div>
+      <div class="note" id="dataCount" style="margin:0 0 8px" aria-live="polite"></div>
+      <div class="tscroll"><table id="tblData"></table></div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="panel" id="p-rules">
+    <div class="grid g2">
+      <div class="card rules">
+        <h3>The flow</h3>
+        <ol>
+          <li>Each location updates <b>one</b> standard file (same template, fixed file name, no version numbers) in its own shared folder.</li>
+          <li>The consolidation reads only the <b>raw input sheets</b> (Incidents, Hazard actions, Hours, Submission info) — never local dashboards.</li>
+          <li>The <b>Data check</b> gate shows READY / CHECK / MISSING per location before anything is reported.</li>
+          <li>All KPIs are calculated centrally with <b>one formula set</b>, one cut-off date and one set of targets. Locations cannot change regional logic.</li>
+          <li>Reports (slides / dashboard) are linked only to the calculated report sheets, so a refresh updates everything.</li>
+        </ol>
+        <h3>Monthly routine (~10 minutes)</h3>
+        <ol>
+          <li>Locations fill their file and set status = Submitted.</li>
+          <li>Regional owner sets the reporting month → Refresh all.</li>
+          <li>Data check: all READY? If not, the location fixes its file → refresh again.</li>
+          <li>Update report links → export PDF.</li>
+        </ol>
+      </div>
+      <div class="card rules">
+        <h3>Calculation rules</h3>
+        <ul>
+          <li><b>Counted incident</b> = Type LTI / MTI / FAI / Near Miss, not excluded (commuting, contractor/vendor), valid standard risk family, real date, not an <code>EX-</code> example row.</li>
+          <li><code>LTIF = LTI × 200,000 / hours</code></li>
+          <li><code>TRIR = (LTI + MTI) × 200,000 / hours</code></li>
+          <li><code>Severity rate = lost days × 200,000 / hours</code> (lost days counted in the month of the incident)</li>
+          <li><b>Regional rates</b> use TOTAL injuries and TOTAL hours of all locations — never an average of location rates.</li>
+          <li><b>Hazard reports</b> = unique hazard IDs (one hazard can have several action rows; each action is tracked separately).</li>
+          <li><b>Overdue</b> = In Progress / Not Started with due date before the cut-off date (end of reporting month).</li>
+          <li><b>Blank hours</b> = not reported → rate shown as <span class="pill p-warn">Provisional</span>, never as zero.</li>
+          <li><b>Year-on-year</b> compares the same months (Jan → reporting month) of both years, so locations must keep last year's data in their file.</li>
+        </ul>
+        <h3>Demo data</h3>
+        <p class="note" style="font-size:13px">Five fictitious locations, Jan 2025 – Oct 2026, generated with a fixed seed. Deliberate issues are injected so the quality gate has something to catch: example rows left in a file, a month of hours missing, an LTI without lost days, a draft file for the wrong period, an old template, a duplicate ID, an invalid risk family and a location that has not submitted. Tick <b>“Simulate: locations corrected their files”</b> to see the same report after the fixes.</p>
+      </div>
+    </div>
+  </section>
+</div>
+<footer>Demo built with synthetic data only · no real company, site or person is represented · single HTML file, no external libraries</footer>
+
+<script>
+(function(){
+"use strict";
+/* ================= CONSTANTS ================= */
+const RATE_BASE = 200000;
+const REP_YEAR = 2026, PREV_YEAR = 2025, MAX_MONTH = 10;
+const TODAY = "2026-11-17";
+const TEMPLATE = "REG-HSE-v6";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS_L = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const TYPES = ["LTI","MTI","FAI","Near Miss"];
+const RF = [
+  ["Machinery, Equipment and Hazardous Energy","Machinery & energy"],
+  ["Material Handling & Lifting","Material handling"],
+  ["Vehicles & Traffic Management","Vehicles & traffic"],
+  ["Tools & Sharp Objects","Tools & sharp objects"],
+  ["Fire, Explosion & Hot Work","Fire & hot work"],
+  ["Electrical Energy","Electrical"],
+  ["Slip, Trip & Fall","Slip, trip & fall"],
+  ["Work at Height","Work at height"],
+  ["Ergonomics & Manual Handling","Ergonomics"],
+  ["Chemical & Hazardous Substances","Chemicals"]
+];
+const RF_NAMES = RF.map(r=>r[0]);
+const SITES = [
+  {country:"Country A", site:"Plant Alpha",   hours:48000, risk:1.6, haz:9, w:[5,3,2,3,1,1,2,1,2,1], areas:["Extrusion","Winding","Warehouse","Maintenance","Loading bay"]},
+  {country:"Country B", site:"Plant Bravo",   hours:86000, risk:0.7, haz:13, w:[3,4,4,1,1,1,3,1,2,1], areas:["Line 1","Line 2","Dispatch","Utilities","Warehouse"]},
+  {country:"Country C", site:"Plant Charlie", hours:64000, risk:1.0, haz:10, w:[2,2,1,2,3,2,2,1,1,2], areas:["Compounding","Drawing","Lab","Utilities","Yard"]},
+  {country:"Country D", site:"Plant Delta",   hours:39000, risk:1.1, haz:6,  w:[2,3,2,1,1,1,3,2,2,1], areas:["Assembly","Packing","Store","Workshop","Yard"]},
+  {country:"Country E", site:"Plant Echo",    hours:27000, risk:0.8, haz:5,  w:[1,2,1,1,1,1,2,1,3,1], areas:["Line A","Line B","Store","Office","Yard"]}
+];
+const COUNTRIES = SITES.map(s=>s.country);
+/* hand-placed LTIs: [year, month, day, lostDays, riskFamilyIndex] */
+const LTI_PLAN = {
+  "Country A":[[2025,5,14,10,0],[2025,8,6,4,1],[2026,2,11,21,0],[2026,3,19,2,3],[2026,9,8,5,1]],
+  "Country B":[[2025,3,4,6,2]],
+  "Country C":[[2025,11,20,12,4],[2026,6,15,8,5],[2026,7,22,3,0]],
+  "Country D":[[2026,4,9,15,6]],
+  "Country E":[[2025,6,3,3,8]]
+};
+
+/* ================= HELPERS ================= */
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function pois(r,l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=r();}while(p>L);return k-1;}
+function pad(n){return String(n).padStart(2,"0");}
+function iso(y,m,d){return y+"-"+pad(m)+"-"+pad(d);}
+function daysIn(y,m){return new Date(Date.UTC(y,m,0)).getUTCDate();}
+function addDays(s,n){const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function pick(r,arr){return arr[Math.floor(r()*arr.length)];}
+function wpick(r,w){const t=w.reduce((a,b)=>a+b,0);let x=r()*t;for(let i=0;i<w.length;i++){x-=w[i];if(x<0)return i;}return w.length-1;}
+function cutoffOf(y,m){return iso(y,m,daysIn(y,m));}
+function fmtDate(s){if(!s)return "";const p=s.split("-");return p[2]+"-"+MONTHS[+p[1]-1]+"-"+p[0];}
+function f2(v){return (v===null||v===undefined||!isFinite(v))?"–":v.toFixed(2);}
+function fInt(v){return (v===null||v===undefined||!isFinite(v))?"–":Math.round(v).toLocaleString("en-US");}
+function fPct(v){return (v===null||v===undefined||!isFinite(v))?"–":(v>0?"+":"")+Math.round(v*100)+"%";}
+function esc(s){return String(s===null||s===undefined?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function rate(n,h){return h>0?n*RATE_BASE/h:null;}
+
+/* ================= BASE DATA (raw "country files") ================= */
+function generateBase(){
+  const base = {};
+  SITES.forEach((s,si)=>{
+    const r = mulberry(1000+si*97);
+    const inc=[], haz=[], hrs=[];
+    let incSeq=1, hazSeq=1;
+    [PREV_YEAR,REP_YEAR].forEach(y=>{
+      const lastM = y===REP_YEAR?MAX_MONTH:12;
+      for(let m=1;m<=lastM;m++){
+        hrs.push({Year:y,MonthNo:m,Hours:Math.round(s.hours*(0.93+r()*0.14))});
+        const growth = y===REP_YEAR?1.35:1;
+        const counts = {MTI:pois(r,0.11*s.risk),FAI:pois(r,0.24*s.risk),"Near Miss":pois(r,1.1*s.risk*growth)};
+        Object.keys(counts).forEach(t=>{for(let k=0;k<counts[t];k++){
+          inc.push(mkInc(r,s,y,m,t,wpick(r,s.w),null,"",incSeq++));
+        }});
+        (LTI_PLAN[s.country]||[]).filter(p=>p[0]===y&&p[1]===m).forEach(p=>{
+          const rec = mkInc(r,s,y,m,"LTI",p[4],p[3],"",incSeq++); rec.Date=iso(y,m,p[2]); rec.DueDate=addDays(rec.Date,30);
+          if(rec.CompletionDate) rec.CompletionDate=addDays(rec.Date,24);
+          inc.push(rec);
+        });
+        if(r()<0.09) inc.push(mkInc(r,s,y,m,"Other",2,null,"Commuting",incSeq++));
+        if(r()<0.06) inc.push(mkInc(r,s,y,m,pick(r,["Near Miss","FAI"]),wpick(r,s.w),null,"Contractor/vendor",incSeq++));
+        const nh = Math.max(1,Math.round(s.haz*(y===REP_YEAR?1.15:1)*(0.7+r()*0.6)));
+        for(let k=0;k<nh;k++){
+          const id = "HAZ-"+String(hazSeq++).padStart(5,"0");
+          const d = iso(y,m,1+Math.floor(r()*daysIn(y,m)));
+          const rf = RF_NAMES[wpick(r,s.w)], area=pick(r,s.areas);
+          const nAct = r()<0.08?3:(r()<0.25?2:1);
+          for(let a=0;a<nAct;a++) haz.push(mkHazAction(r,id,d,area,rf));
+        }
+      }
+    });
+    /* a few records dated after the latest cut-off (info only) */
+    if(si<2){for(let k=0;k<3;k++){const id="HAZ-"+String(hazSeq++).padStart(5,"0");haz.push(mkHazAction(r,id,iso(2026,11,3+k*3),pick(r,s.areas),RF_NAMES[wpick(r,s.w)]));}}
+    inc.sort((a,b)=>a.Date<b.Date?-1:1); haz.sort((a,b)=>a.Date<b.Date?-1:1);
+    base[s.country]={inc,haz,hrs};
+  });
+  return base;
+}
+function mkInc(r,s,y,m,type,rfi,lost,excl,seq){
+  const d = iso(y,m,1+Math.floor(r()*daysIn(y,m)));
+  const due = addDays(d,20+Math.floor(r()*25));
+  let st="Completed", comp=addDays(d,10+Math.floor(r()*30));
+  if(due>=TODAY || comp>TODAY){ if(r()<0.55){st=pick(r,["In Progress","Not Started"]);comp="";} else comp = comp>TODAY?TODAY:comp; }
+  return {IncidentID:"INC-"+String(seq).padStart(4,"0"),Date:d,Area:type==="Other"?"":pick(r,s.areas),Type:type,RiskFamily:RF_NAMES[rfi],Exclude:excl,ActionStatus:st,DueDate:due,CompletionDate:comp,LostDays:type==="LTI"?lost:null};
+}
+function mkHazAction(r,id,d,area,rf){
+  const due = addDays(d,14+Math.floor(r()*60));
+  let st, comp="";
+  const pDone = due<addDays(TODAY,-45)?0.97:(due<TODAY?0.85:0.4);
+  st = r()<pDone?"Completed":pick(r,["In Progress","In Progress","Not Started"]);
+  if(st==="Completed"){ comp = addDays(d,5+Math.floor(r()*55)); if(comp>TODAY) comp=TODAY; }
+  return {HazardID:id,Date:d,Area:area,RiskFamily:rf,Status:st,DueDate:due,CompletionDate:comp};
+}
+const BASE = generateBase();
+
+/* ================= "COUNTRY FILES" incl. injected issues ================= */
+function buildFiles(fixed, repMonth){
+  const files=[];
+  SITES.forEach(s=>{
+    const b = BASE[s.country];
+    const f = {meta:{Country:s.country,Site:s.site,ReportingYear:REP_YEAR,ReportingMonth:repMonth,Status:"Submitted",TemplateVersion:TEMPLATE,
+               SourceFile:"HSE_"+s.country.replace(" ","")+".xlsx",DateModified:"2026-11-"+pad(10+COUNTRIES.indexOf(s.country))+" 09:"+pad(10+7*COUNTRIES.indexOf(s.country)),ExampleHours:"No"},
+               inc:b.inc.map(x=>Object.assign({},x)), haz:b.haz.map(x=>Object.assign({},x)), hrs:b.hrs.map(x=>Object.assign({},x))};
+    if(!fixed){
+      if(s.country==="Country B"){
+        f.meta.ExampleHours="Yes";
+        [["EX-001","2026-01-12","FAI"],["EX-002","2026-03-03","LTI"],["EX-003","2026-05-21","Near Miss"],["EX-004","2025-07-09","MTI"]].forEach(e=>
+          f.inc.push({IncidentID:e[0],Date:e[1],Area:"Example area",Type:e[2],RiskFamily:RF_NAMES[1],Exclude:"",ActionStatus:"Completed",DueDate:addDays(e[1],30),CompletionDate:addDays(e[1],20),LostDays:e[2]==="LTI"?5:null}));
+        ["EX-H001","EX-H002","EX-H003"].forEach((id,i)=>f.haz.push({HazardID:id,Date:iso(2026,2+i,10),Area:"Example area",RiskFamily:RF_NAMES[0],Status:"Completed",DueDate:iso(2026,3+i,10),CompletionDate:iso(2026,3+i,5)}));
+      }
+      if(s.country==="Country C"){
+        f.hrs = f.hrs.filter(h=>!(h.Year===2026&&h.MonthNo===8));
+        const lt = f.inc.find(x=>x.Type==="LTI"&&x.Date.startsWith("2026-07")); if(lt) lt.LostDays=null;
+      }
+      if(s.country==="Country D"){
+        f.meta.Status="Draft"; f.meta.TemplateVersion="REG-HSE-v5";
+        f.meta.ReportingMonth = repMonth>1?repMonth-1:12; if(repMonth===1) f.meta.ReportingYear=REP_YEAR-1;
+        f.hrs = f.hrs.filter(h=>!(h.Year===2025&&h.MonthNo===3));
+        const c26 = f.inc.filter(x=>x.Date.startsWith("2026-0"));
+        if(c26.length>2){ c26[1].IncidentID = c26[0].IncidentID; c26[2].RiskFamily="Housekeeping"; }
+        f.inc.push({IncidentID:"INC-9001",Date:"2026-05-14",Area:"Packing",Type:"Property damage",RiskFamily:RF_NAMES[2],Exclude:"",ActionStatus:"",DueDate:"",CompletionDate:"",LostDays:null});
+        f.haz.push({HazardID:"HAZ-9001",Date:"2026-06-02",Area:"Store",RiskFamily:"5S / Housekeeping",Status:"Completed",DueDate:"2026-06-20",CompletionDate:"2026-06-18"});
+      }
+      if(s.country==="Country E") return; /* no file received */
+    }
+    files.push(f);
+  });
+  return files;
+}
+
+/* ================= CONSOLIDATION (same logic as the Power Query) ================= */
+function consolidate(files){
+  const sub=[],inc=[],haz=[],hrs=[];
+  files.forEach(f=>{
+    const C=f.meta.Country, SF=f.meta.SourceFile;
+    sub.push(Object.assign({},f.meta));
+    f.inc.forEach(x=>{
+      const y = x.Date?+x.Date.slice(0,4):null, m=x.Date?+x.Date.slice(5,7):null;
+      const rfv = RF_NAMES.includes(x.RiskFamily)?1:0;
+      const ex = (x.IncidentID||"").startsWith("EX-")?1:0;
+      const cnt = (x.Date && TYPES.includes(x.Type) && !x.Exclude && rfv===1 && ex===0)?1:0;
+      const st = cnt!==1?"":(x.ActionStatus==="Completed"?"Closed":(["In Progress","Not Started"].includes(x.ActionStatus)?"Pending":"Not tracked"));
+      inc.push(Object.assign({Country:C,SourceFile:SF},x,{Year:y,MonthNo:m,RF_Valid:rfv,IsExample:ex,Counted:cnt,ActionState:st}));
+    });
+    f.haz.forEach(x=>{
+      const y = x.Date?+x.Date.slice(0,4):null, m=x.Date?+x.Date.slice(5,7):null;
+      const rfv = RF_NAMES.includes(x.RiskFamily)?1:0;
+      const ex = (x.HazardID||"").startsWith("EX-")?1:0;
+      const cnt = (x.Date && x.HazardID && rfv===1 && ex===0)?1:0;
+      const st = cnt!==1?"":(x.Status==="Completed"?"Closed":(["In Progress","Not Started"].includes(x.Status)?"Pending":"Not tracked"));
+      haz.push(Object.assign({Country:C,SourceFile:SF},x,{Year:y,MonthNo:m,RF_Valid:rfv,IsExample:ex,Counted:cnt,ActionState:st}));
+    });
+    f.hrs.forEach(h=>{ if(h.Hours>0) hrs.push({Country:C,SourceFile:SF,Year:h.Year,MonthNo:h.MonthNo,Hours:h.Hours}); });
+  });
+  const seen = new Set();
+  haz.forEach(h=>{ const k=h.Country+"|"+h.HazardID; if(h.Counted===1 && !seen.has(k)){seen.add(k);h.FirstOfHazard=1;} else h.FirstOfHazard=0; });
+  return {sub,inc,haz,hrs};
+}
+
+/* ================= STATE ================= */
+const state = {month:MAX_MONTH, view:"*", fixed:false, tgt:{LTIF:0.64,TRIR:1.03,SR:7}, tab:"check"};
+let D = null;
+function refresh(){ D = consolidate(buildFiles(state.fixed,state.month)); }
+
+/* ================= CALCULATIONS ================= */
+const inScope = (r,key)=> key==="*" || r.Country===key;
+function hoursOf(key,y,m){ return D.hrs.filter(h=>inScope(h,key)&&h.Year===y&&h.MonthNo===m).reduce((a,h)=>a+h.Hours,0); }
+function cntInc(key,y,m,type){ return D.inc.filter(r=>inScope(r,key)&&r.Year===y&&r.MonthNo===m&&r.Type===type&&r.Counted===1).length; }
+function lostDays(key,y,m){ return D.inc.filter(r=>inScope(r,key)&&r.Year===y&&r.MonthNo===m&&r.Type==="LTI"&&r.Counted===1).reduce((a,r)=>a+(+r.LostDays||0),0); }
+function hazReports(key,y,m){ return D.haz.filter(r=>inScope(r,key)&&r.Year===y&&r.MonthNo===m&&r.Counted===1).reduce((a,r)=>a+r.FirstOfHazard,0); }
+function monthly(key,y){
+  const out=[];
+  for(let m=1;m<=12;m++){
+    const o={m,LTI:cntInc(key,y,m,"LTI"),MTI:cntInc(key,y,m,"MTI"),FAI:cntInc(key,y,m,"FAI"),NM:cntInc(key,y,m,"Near Miss"),HAZ:hazReports(key,y,m),H:hoursOf(key,y,m),LD:lostDays(key,y,m)};
+    o.TOT=o.LTI+o.MTI+o.FAI+o.NM; out.push(o);
+  }
+  return out;
+}
+function ytd(mon,upTo){
+  const s={LTI:0,MTI:0,FAI:0,NM:0,HAZ:0,H:0,LD:0,TOT:0};
+  mon.filter(o=>o.m<=upTo).forEach(o=>Object.keys(s).forEach(k=>s[k]+=o[k])); return s;
+}
+function scopeCountries(key){ return key==="*"?COUNTRIES:[key]; }
+function missingMonths(country,y,upTo){ let n=0; for(let m=1;m<=upTo;m++) if(hoursOf(country,y,m)===0) n++; return n; }
+function provisional(key,y){ return scopeCountries(key).some(c=>missingMonths(c,y,state.month)>0); }
+
+function dataCheck(){
+  const RM = state.month, cutoff=cutoffOf(REP_YEAR,RM);
+  return COUNTRIES.map(c=>{
+    const subs = D.sub.filter(s=>s.Country===c);
+    const r = {c, files:subs.length};
+    if(!subs.length){ Object.assign(r,{status:"-",period:"-",periodOK:"-",tpl:"-",noHrs:missingMonths(c,REP_YEAR,RM),exHrs:"-",exRows:0,notCounted:0,ltiNoLD:0,after:0,dups:0,overall:"MISSING",prev:"No records"}); return r; }
+    const s=subs[0];
+    r.status=s.Status; r.period=s.ReportingYear+"-"+pad(s.ReportingMonth);
+    r.periodOK = r.period===REP_YEAR+"-"+pad(RM)?"OK":"Mismatch";
+    r.tpl = s.TemplateVersion===TEMPLATE?"OK":"Old/unknown";
+    r.noHrs = missingMonths(c,REP_YEAR,RM);
+    r.exHrs = s.ExampleHours;
+    r.exRows = D.inc.filter(x=>x.Country===c&&x.IsExample===1).length + D.haz.filter(x=>x.Country===c&&x.IsExample===1).length;
+    r.notCounted = D.inc.filter(x=>x.Country===c&&x.Year===REP_YEAR&&x.Counted===0&&x.IsExample===0&&!x.Exclude).length
+                 + D.haz.filter(x=>x.Country===c&&x.Year===REP_YEAR&&x.Counted===0&&x.IsExample===0).length;
+    r.ltiNoLD = D.inc.filter(x=>x.Country===c&&x.Year===REP_YEAR&&x.Counted===1&&x.Type==="LTI"&&(x.LostDays===null||x.LostDays==="")).length;
+    r.after = D.inc.filter(x=>x.Country===c&&x.Date>cutoff).length + D.haz.filter(x=>x.Country===c&&x.Date>cutoff).length;
+    const ids={}; D.inc.filter(x=>x.Country===c&&x.IncidentID).forEach(x=>ids[x.IncidentID]=(ids[x.IncidentID]||0)+1);
+    r.dups = Object.values(ids).filter(v=>v>1).reduce((a,v)=>a+v,0);
+    const bad = r.files>1||r.status!=="Submitted"||r.periodOK!=="OK"||r.tpl!=="OK"||r.noHrs>0||r.exHrs==="Yes"||r.exRows>0||r.notCounted>0||r.ltiNoLD>0||r.dups>0;
+    r.overall = bad?"CHECK":"READY";
+    const prevMissing = missingMonths(c,PREV_YEAR,RM)>0;
+    const prevRecs = D.inc.filter(x=>x.Country===c&&x.Year===PREV_YEAR).length + D.haz.filter(x=>x.Country===c&&x.Year===PREV_YEAR).length;
+    r.prev = prevMissing?"Hours missing":(prevRecs===0?"No records":"OK");
+    return r;
+  });
+}
+function actions(key){
+  const cutoff=cutoffOf(REP_YEAR,state.month);
+  const calc = rows=>{
+    const base = rows.filter(r=>inScope(r,key)&&r.Year===REP_YEAR&&r.Date<=cutoff&&r.Counted===1);
+    const closed=base.filter(r=>r.ActionState==="Closed").length;
+    const pend=base.filter(r=>r.ActionState==="Pending");
+    const over=pend.filter(r=>r.DueDate&&r.DueDate<cutoff).length;
+    const nt=base.filter(r=>r.ActionState==="Not tracked").length;
+    return {closed,ontime:pend.length-over,over,nt,total:closed+pend.length+nt};
+  };
+  return {inc:calc(D.inc),haz:calc(D.haz)};
+}
+function pareto(key){
+  const rows = RF.map(([full,short])=>{
+    const f = t=>D.inc.filter(r=>inScope(r,key)&&r.Year===REP_YEAR&&r.MonthNo<=state.month&&r.RiskFamily===full&&r.Type===t&&r.Counted===1).length;
+    const o={full,short,LTI:f("LTI"),MTI:f("MTI"),FAI:f("FAI"),NM:f("Near Miss")}; o.T=o.LTI+o.MTI+o.FAI+o.NM; return o;
+  });
+  rows.sort((a,b)=>b.T-a.T || RF_NAMES.indexOf(a.full)-RF_NAMES.indexOf(b.full));
+  const tot=rows.reduce((a,r)=>a+r.T,0); let c=0; rows.forEach(r=>{c+=r.T;r.cum=tot?c/tot:0;}); return rows;
+}
+
+/* ================= SVG CHARTS ================= */
+function niceMax(v){ if(!(v>0)) return 1; const p=Math.pow(10,Math.floor(Math.log10(v))); const n=v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; }
+function comboChart(opt){
+  const W=620,H=250,L=44,R=14,T=14,B=30,cw=W-L-R,ch=H-T-B,n=opt.labels.length;
+  const vals=[].concat(opt.bars||[],...opt.lines.map(l=>l.data)).filter(v=>v!==null&&isFinite(v));
+  const ymax=niceMax(Math.max(0.0001,...vals)*1.1);
+  const x=i=>L+cw*(i+0.5)/n, y=v=>T+ch-(v/ymax)*ch, bw=cw/n*0.55;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(opt.aria)}">`;
+  for(let k=0;k<=4;k++){const v=ymax*k/4,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#E6EBF1"/><text x="${L-6}" y="${yy+4}" font-size="10" text-anchor="end" fill="#6B7785">${v>=10?Math.round(v):v.toFixed(v<1?2:1)}</text>`;}
+  opt.labels.forEach((lb,i)=>{s+=`<text x="${x(i)}" y="${H-10}" font-size="10.5" text-anchor="middle" fill="#6B7785">${lb}</text>`;});
+  (opt.bars||[]).forEach((v,i)=>{ if(v===null||!isFinite(v)) return; const yy=y(v); s+=`<rect x="${x(i)-bw/2}" y="${yy}" width="${bw}" height="${T+ch-yy}" rx="3" fill="${opt.barColor}"><title>${opt.labels[i]}: ${f2(v)}</title></rect>`; });
+  opt.lines.forEach(l=>{
+    let d="",open=false;
+    l.data.forEach((v,i)=>{ if(v===null||!isFinite(v)){open=false;return;} d+=(open?"L":"M")+x(i)+" "+y(v)+" "; open=true; });
+    if(d) s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2.5}" ${l.dash?`stroke-dasharray="${l.dash}"`:""}/>`;
+    if(l.dots) l.data.forEach((v,i)=>{ if(v!==null&&isFinite(v)) s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${l.color}"><title>${l.name} ${opt.labels[i]}: ${f2(v)}</title></circle>`; });
+  });
+  return s+"</svg>";
+}
+function paretoChart(rows){
+  const W=620,H=290,L=36,R=40,T=14,B=80,cw=W-L-R,ch=H-T-B,n=rows.length;
+  const ymax=niceMax(Math.max(1,...rows.map(r=>r.T))), x=i=>L+cw*(i+0.5)/n, y=v=>T+ch-v/ymax*ch, yp=p=>T+ch-p*ch, bw=cw/n*0.6;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Pareto chart by risk family">`;
+  for(let k=0;k<=4;k++){const v=ymax*k/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#E6EBF1"/><text x="${L-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="#6B7785">${Math.round(v)}</text><text x="${W-R+6}" y="${yp(k/4)+4}" font-size="10" fill="#6B7785">${k*25}%</text>`;}
+  s+=`<line x1="${L}" x2="${W-R}" y1="${yp(.8)}" y2="${yp(.8)}" stroke="#C62828" stroke-dasharray="5 4"/>`;
+  rows.forEach((r,i)=>{ const yy=y(r.T); s+=`<rect x="${x(i)-bw/2}" y="${yy}" width="${bw}" height="${T+ch-yy}" rx="3" fill="#123B73"><title>${esc(r.short)}: ${r.T} (LTI ${r.LTI}, MTI ${r.MTI}, FAI ${r.FAI}, NM ${r.NM})</title></rect>`;
+    if(r.T) s+=`<text x="${x(i)}" y="${yy-4}" font-size="10" text-anchor="middle" fill="#123B73">${r.T}</text>`;
+    s+=`<text transform="translate(${x(i)+3},${T+ch+8}) rotate(32)" font-size="9.5" fill="#4A5563">${esc(r.short)}</text>`; });
+  let d=""; rows.forEach((r,i)=>d+=(i?"L":"M")+x(i)+" "+yp(r.cum)+" ");
+  s+=`<path d="${d}" fill="none" stroke="#B26A00" stroke-width="2.5"/>`;
+  rows.forEach((r,i)=>s+=`<circle cx="${x(i)}" cy="${yp(r.cum)}" r="3" fill="#B26A00"><title>${Math.round(r.cum*100)}%</title></circle>`);
+  return s+"</svg>";
+}
+function hbarChart(items,target,label){
+  const W=600,rowH=34,L=110,R=60,T=10,H=T+items.length*rowH+24,cw=W-L-R;
+  const xmax=niceMax(Math.max(target||0,...items.map(i=>i.v||0))*1.15||1), x=v=>L+v/xmax*cw;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(label)}">`;
+  items.forEach((it,i)=>{ const yy=T+i*rowH;
+    s+=`<text x="${L-8}" y="${yy+20}" font-size="12" text-anchor="end" fill="#1B2430" font-weight="${it.region?700:400}">${esc(it.name)}</text>`;
+    if(it.v===null){ s+=`<text x="${L+6}" y="${yy+20}" font-size="11" fill="#9AA7B6">no data</text>`; return; }
+    const col = it.region?"#0F8B8D":(target!=="" && target!==null && it.v>target?"#C62828":"#1E8E3E");
+    s+=`<rect x="${L}" y="${yy+6}" width="${Math.max(1,x(it.v)-L)}" height="20" rx="4" fill="${col}" opacity="${it.prov?0.55:1}"/>`;
+    s+=`<text x="${x(it.v)+6}" y="${yy+20}" font-size="11.5" fill="#1B2430">${f2(it.v)}${it.prov?" *":""}</text>`; });
+  if(target!==""&&target!==null&&isFinite(target)){ s+=`<line x1="${x(target)}" x2="${x(target)}" y1="${T}" y2="${H-20}" stroke="#C62828" stroke-dasharray="5 4"/><text x="${x(target)}" y="${H-6}" font-size="10.5" text-anchor="middle" fill="#C62828">target ${target}</text>`; }
+  return s+"</svg>";
+}
+function stackBar(segs){
+  const tot=segs.reduce((a,s)=>a+s.v,0)||1;
+  return `<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)">${segs.map(s=>s.v?`<div title="${s.n}: ${s.v}" style="width:${s.v/tot*100}%;background:${s.c}"></div>`:"").join("")}</div>
+  <div class="legend">${segs.map(s=>`<span><i class="box" style="background:${s.c}"></i>${s.n} ${s.v}</span>`).join("")}</div>`;
+}
+
+/* ================= RENDER ================= */
+const $=id=>document.getElementById(id);
+function pill(t){ const cls = ["READY","OK","On target","Better","Submitted"].includes(t)?"p-ok":(["CHECK","MISSING","Above target","Worse","Mismatch","Old/unknown","Draft","Hours missing","No records"].includes(t)?"p-bad":(t==="Provisional"?"p-warn":"p-info")); return `<span class="pill ${cls}">${esc(t)}</span>`; }
+function scopeName(k){ return k==="*"?"Region (all locations)":k+" · "+SITES.find(s=>s.country===k).site; }
+
+function renderFlow(chk){
+  const nInc=D.inc.length,nHaz=D.haz.length,nH=D.hrs.length;
+  const cInc=D.inc.filter(r=>r.Counted).length,cHaz=D.haz.filter(r=>r.Counted).length;
+  const ready=chk.filter(r=>r.overall==="READY").length;
+  const srcs = SITES.map(s=>{const r=chk.find(x=>x.c===s.country);return `<div class="src"><span><b>${s.country}</b> · ${s.site}</span>${r.files?`<span class="pill p-info">file ✓</span>`:`<span class="pill p-bad">no file</span>`}</div>`;}).join("");
+  $("flow").innerHTML = `
+   <div class="fstep"><h4>1 · Location files</h4><div class="srcs">${srcs}</div></div><div class="arrow">➜</div>
+   <div class="fstep"><h4>2 · Consolidate</h4><div class="big">${(nInc+nHaz+nH).toLocaleString()}</div><div class="sm">rows read from ${D.sub.length} files<br>${nInc} incidents · ${nHaz} hazard actions · ${nH} hour records</div></div><div class="arrow">➜</div>
+   <div class="fstep"><h4>3 · Data check</h4><div class="big">${ready} / ${COUNTRIES.length}</div><div class="sm">locations READY<br>${chk.filter(r=>r.overall==="CHECK").length} CHECK · ${chk.filter(r=>r.overall==="MISSING").length} MISSING</div></div><div class="arrow">➜</div>
+   <div class="fstep"><h4>4 · Calculate</h4><div class="big">${(cInc+cHaz).toLocaleString()}</div><div class="sm">rows counted with one rule set<br>${(nInc-cInc)+(nHaz-cHaz)} rows excluded with a reason</div></div><div class="arrow">➜</div>
+   <div class="fstep"><h4>5 · Report</h4><div class="big">${MONTHS[state.month-1]} ${REP_YEAR}</div><div class="sm">cut-off ${fmtDate(cutoffOf(REP_YEAR,state.month))}<br>${provisional("*",REP_YEAR)?pill("Provisional")+" regional rates":pill("OK")+" regional rates"}</div></div>`;
+  $("story").innerHTML = state.fixed
+    ? `<b>After corrections:</b> every location submitted on the right template and period, example rows are gone, hours are complete — all ${COUNTRIES.length} locations are READY and the regional rates are final. Nothing was edited centrally; each location fixed its own file and the hub simply refreshed.`
+    : `<b>What the gate caught this month:</b> ${ready} of ${COUNTRIES.length} locations are READY. The others still feed the consolidation, but their problems are visible <i>before</i> the report goes out — and because hours are incomplete, the regional rates are flagged <b>Provisional</b> instead of silently looking better than reality. Tick “Simulate: locations corrected their files” to compare.`;
+}
+
+function renderCheck(chk){
+  const RM=state.month;
+  $("chkSummary").textContent = `Period ${MONTHS_L[RM-1]} ${REP_YEAR} · cut-off ${fmtDate(cutoffOf(REP_YEAR,RM))} · READY ${chk.filter(r=>r.overall==="READY").length} of ${chk.length}`;
+  const hdr=["Location","Files found","Submission status","Period in file","Period matches?","Template OK?","Months with no hours (YTD)","Example hours left?","Example rows (EX-)","Rows not counted","LTI without lost days","Records after cut-off (info)","Duplicate IDs","OVERALL","Previous-year data"];
+  let h="<thead><tr>"+hdr.map((x,i)=>`<th class="${i?"":"l"}">${x}</th>`).join("")+"</tr></thead><tbody>";
+  chk.forEach(r=>{
+    const bad=(cond,v)=>`<td class="${cond?"hl":""}">${esc(v)}</td>`;
+    h+=`<tr><td class="l"><b>${r.c}</b></td>${bad(r.files!==1,r.files)}${bad(r.status!=="Submitted"&&r.files,r.status)}<td>${r.period}</td>${bad(r.periodOK==="Mismatch",r.periodOK)}${bad(r.tpl==="Old/unknown",r.tpl)}${bad(r.noHrs>0,r.noHrs)}${bad(r.exHrs==="Yes",r.exHrs)}${bad(r.exRows>0,r.exRows)}${bad(r.notCounted>0,r.notCounted)}${bad(r.ltiNoLD>0,r.ltiNoLD)}<td class="${r.after?"hl-w":""}">${r.after}</td>${bad(r.dups>0,r.dups)}<td>${pill(r.overall)}</td><td>${pill(r.prev)}</td></tr>`;
+  });
+  $("tblCheck").innerHTML=h+"</tbody>";
+  $("hrsTitle").textContent = `${REP_YEAR}, Jan → ${MONTHS[RM-1]} (red = missing)`;
+  let t="<thead><tr><th class='l'>Location</th>"+MONTHS.slice(0,RM).map(m=>`<th>${m}</th>`).join("")+"<th>Total</th></tr></thead><tbody>";
+  COUNTRIES.forEach(c=>{ let tot=0; t+=`<tr><td class="l">${c}</td>`; for(let m=1;m<=RM;m++){const v=hoursOf(c,REP_YEAR,m);tot+=v;t+=`<td class="${v===0?"hl":""}">${v?fInt(v/1000)+"k":"—"}</td>`;} t+=`<td><b>${fInt(tot/1000)}k</b></td></tr>`; });
+  $("tblHours").innerHTML=t+"</tbody>";
+  /* reasons */
+  const reasons={};
+  D.inc.filter(r=>r.Year===REP_YEAR||r.IsExample).forEach(r=>{const why=whyInc(r); if(why!=="Counted") reasons[why]=(reasons[why]||0)+1;});
+  D.haz.filter(r=>r.Year===REP_YEAR||r.IsExample).forEach(r=>{const why=whyHaz(r); if(why!=="Counted") reasons["Hazard: "+why]=(reasons["Hazard: "+why]||0)+1;});
+  const items=Object.entries(reasons).sort((a,b)=>b[1]-a[1]);
+  if(!items.length){ $("rejectChart").innerHTML="<p class='note'>No rejected rows.</p>"; return; }
+  const max=Math.max(...items.map(i=>i[1]));
+  $("rejectChart").innerHTML = items.map(([k,v])=>{const isIssue=!/^Excluded/.test(k);return `<div style="display:grid;grid-template-columns:minmax(150px,46%) 1fr 34px;gap:8px;align-items:center;margin:5px 0;font-size:12.5px"><span>${esc(k)}</span><div style="background:#EEF2F7;border-radius:4px;height:14px"><div style="width:${v/max*100}%;height:14px;border-radius:4px;background:${isIssue?"#C62828":"#7A8899"}"></div></div><b>${v}</b></div>`;}).join("")
+    + `<div class="legend"><span><i class="box" style="background:#7A8899"></i>Excluded by rule (expected)</span><span><i class="box" style="background:#C62828"></i>Data issue (location must fix)</span></div>`;
+}
+function whyInc(r){ if(r.IsExample) return "Example row (EX-) left in file"; if(!r.Date) return "No / invalid date"; if(r.Exclude) return "Excluded: "+r.Exclude; if(!TYPES.includes(r.Type)) return "Type not LTI/MTI/FAI/Near Miss"; if(!r.RF_Valid) return "Risk family not in standard list"; return "Counted"; }
+function whyHaz(r){ if(r.IsExample) return "Example row (EX-) left in file"; if(!r.Date) return "No / invalid date"; if(!r.HazardID) return "No hazard ID"; if(!r.RF_Valid) return "Risk family not in standard list"; return "Counted"; }
+
+function renderReport(){
+  const key=state.view, RM=state.month, T=state.tgt;
+  const cur=monthly(key,REP_YEAR), prev=monthly(key,PREV_YEAR);
+  const yc=ytd(cur,RM), yp=ytd(prev,RM);
+  const prov=provisional(key,REP_YEAR);
+  const kp=[
+    {n:"LTIF YTD",v:rate(yc.LTI,yc.H),t:T.LTIF,pv:rate(yp.LTI,yp.H),d:2},
+    {n:"TRIR YTD",v:rate(yc.LTI+yc.MTI,yc.H),t:T.TRIR,pv:rate(yp.LTI+yp.MTI,yp.H),d:2},
+    {n:"Severity rate YTD",v:rate(yc.LD,yc.H),t:T.SR,pv:rate(yp.LD,yp.H),d:2}
+  ];
+  let k = kp.map(o=>{ const st = (o.v===null||o.t===null)?"":(o.v<=o.t?"On target":"Above target");
+    return `<div class="card kpi ${st==="On target"?"ok":st?"bad":"neutral"}"><div class="lbl">${o.n}</div><div class="val">${f2(o.v)}</div>
+      <div class="sub">${o.t!==null?`target ${o.t}`:"no target"} ${st?pill(st):""} ${prov?pill("Provisional"):""}</div>
+      <div class="sub" style="margin-top:4px">${PREV_YEAR} same period: ${f2(o.pv)}</div></div>`; }).join("");
+  k += `<div class="card kpi neutral"><div class="lbl">Counted events YTD</div><div class="val">${yc.TOT}</div>
+      <div class="sub">LTI ${yc.LTI} · MTI ${yc.MTI} · FAI ${yc.FAI} · NM ${yc.NM}</div>
+      <div class="sub" style="margin-top:4px">${fInt(yc.HAZ)} hazard reports · ${fInt(yc.H)} h · ${yc.LD} lost days</div></div>`;
+  $("kpis").innerHTML=k;
+
+  const lab=MONTHS, upto=(arr)=>arr.map((v,i)=>i<RM?v:null);
+  let cl=0,ch=0,cd=0; const ltifY=[],srY=[];
+  cur.forEach((o,i)=>{cl+=o.LTI;cd+=o.LD;ch+=o.H; ltifY.push(i<RM?rate(cl,ch):null); srY.push(i<RM?rate(cd,ch):null);});
+  let pl=0,ph=0,pd=0; const pLt=[],pSr=[];
+  prev.forEach(o=>{pl+=o.LTI;pd+=o.LD;ph+=o.H;pLt.push(rate(pl,ph));pSr.push(rate(pd,ph));});
+  const tl = T.LTIF===null?[]:[{data:lab.map(()=>T.LTIF),color:"#C62828",dash:"6 4",w:2,name:"Target"}];
+  const ts = T.SR===null?[]:[{data:lab.map(()=>T.SR),color:"#C62828",dash:"6 4",w:2,name:"Target"}];
+  $("chLTIF").innerHTML = comboChart({aria:"LTIF chart",labels:lab,bars:upto(cur.map(o=>rate(o.LTI,o.H))),barColor:"#9DB7D9",
+     lines:[...tl,{data:pLt,color:"#A0A8B3",dash:"3 4",w:2,name:"Prev YTD"},{data:ltifY,color:"#0B2A55",dots:true,name:"YTD"}]});
+  $("chSR").innerHTML = comboChart({aria:"Severity rate chart",labels:lab,bars:upto(cur.map(o=>rate(o.LD,o.H))),barColor:"#9FD3D4",
+     lines:[...ts,{data:pSr,color:"#A0A8B3",dash:"3 4",w:2,name:"Prev YTD"},{data:srY,color:"#0F8B8D",dots:true,name:"YTD"}]});
+
+  $("monthlyTitle").textContent = scopeName(key)+" · "+REP_YEAR;
+  const rows=[["LTI","LTI"],["MTI","MTI"],["FAI","FAI"],["Near Miss","NM"],["Total incidents","TOT"],["Hazard reports","HAZ"],["Hours worked","H"],["Lost days (LTI)","LD"]];
+  let t="<thead><tr><th class='l'>Month</th>"+MONTHS.map(m=>`<th>${m}</th>`).join("")+"<th>Total</th></tr></thead><tbody>";
+  rows.forEach(([n,f])=>{ t+=`<tr class="${f==="TOT"?"tot":""}"><td class="l"><b>${n}</b></td>`;
+    cur.forEach((o,i)=>{ if(i>=RM){t+="<td class='muted'></td>";return;} const v=o[f];
+      const cls = f==="H"&&v===0?"hl":(["LTI","MTI","FAI"].includes(f)&&v>0?"hl-w":"");
+      t+=`<td class="${cls}">${f==="H"?(v?fInt(v):"—"):v}</td>`; });
+    t+=`<td><b>${f==="H"?fInt(yc[f]):yc[f]}</b></td></tr>`; });
+  $("tblMonthly").innerHTML=t+"</tbody>";
+
+  $("chPareto").innerHTML = paretoChart(pareto(key));
+
+  const a=actions(key), pc=o=>(o.closed+o.ontime+o.over)?Math.round(o.closed/(o.closed+o.ontime+o.over)*100)+"%":"–";
+  const tot={closed:a.inc.closed+a.haz.closed,ontime:a.inc.ontime+a.haz.ontime,over:a.inc.over+a.haz.over,nt:a.inc.nt+a.haz.nt}; tot.total=tot.closed+tot.ontime+tot.over+tot.nt;
+  $("tblActions").innerHTML = `<thead><tr><th class="l">Action status</th><th>Incident actions</th><th>Hazard actions</th><th>Total</th></tr></thead><tbody>
+    <tr><td class="l">Closed</td><td>${a.inc.closed}</td><td>${a.haz.closed}</td><td>${tot.closed}</td></tr>
+    <tr><td class="l">Pending, on time</td><td>${a.inc.ontime}</td><td>${a.haz.ontime}</td><td>${tot.ontime}</td></tr>
+    <tr><td class="l">Overdue</td><td class="${a.inc.over?"hl":""}">${a.inc.over}</td><td class="${a.haz.over?"hl":""}">${a.haz.over}</td><td class="${tot.over?"hl":""}">${tot.over}</td></tr>
+    <tr><td class="l">Not tracked (no status)</td><td class="${a.inc.nt?"hl-w":""}">${a.inc.nt}</td><td>${a.haz.nt}</td><td>${tot.nt}</td></tr>
+    <tr class="tot"><td class="l">Total</td><td>${a.inc.total}</td><td>${a.haz.total}</td><td>${tot.total}</td></tr>
+    <tr><td class="l"><b>% closed</b> <span class="muted">(excl. not tracked)</span></td><td><b>${pc(a.inc)}</b></td><td><b>${pc(a.haz)}</b></td><td><b>${pc(tot)}</b></td></tr></tbody>`;
+  $("chActions").innerHTML = stackBar([{n:"Closed",v:tot.closed,c:"#1E8E3E"},{n:"On time",v:tot.ontime,c:"#7FB3E0"},{n:"Overdue",v:tot.over,c:"#C62828"},{n:"Not tracked",v:tot.nt,c:"#B26A00"}]);
+
+  /* YoY */
+  const ytdLbl="Jan-"+MONTHS[RM-1];
+  $("yoyTitle").innerHTML = `Year-on-year <small>${ytdLbl} ${REP_YEAR} vs ${ytdLbl} ${PREV_YEAR} · ${esc(scopeName(key))}</small>`;
+  const provY = provisional(key,REP_YEAR)||provisional(key,PREV_YEAR);
+  const yrows=[
+    ["LTI",yp.LTI,yc.LTI,null,"bw"],["MTI",yp.MTI,yc.MTI,null,"bw"],["FAI",yp.FAI,yc.FAI,null,"bw"],["Near Miss",yp.NM,yc.NM,null,"ud"],["Hazard reports",yp.HAZ,yc.HAZ,null,"ud"],
+    ["LTIF",rate(yp.LTI,yp.H),rate(yc.LTI,yc.H),T.LTIF,"bw",1],["TRIR",rate(yp.LTI+yp.MTI,yp.H),rate(yc.LTI+yc.MTI,yc.H),T.TRIR,"bw",1],["Severity rate",rate(yp.LD,yp.H),rate(yc.LD,yc.H),T.SR,"bw",1],
+    ["Lost days (LTI)",yp.LD,yc.LD,null,"bw"],["Hours worked",yp.H,yc.H,null,""]];
+  let y=`<thead><tr><th class="l">${ytdLbl} YTD</th><th>${PREV_YEAR}</th><th>${REP_YEAR}</th><th>Change</th><th>Change %</th><th>Trend</th><th>Target</th><th>vs target</th><th>Data</th></tr></thead><tbody>`;
+  yrows.forEach(([n,p,c,tg,mode,isRate])=>{
+    const ch=(p===null||c===null)?null:c-p, chp=(ch===null||!p)?null:ch/p;
+    let tr=""; if(ch!==null){ if(mode==="bw") tr=ch<0?"Better":ch>0?"Worse":"Same"; else if(mode==="ud") tr=ch>0?"Up":ch<0?"Down":"Same"; }
+    const fm=v=>isRate?f2(v):(n==="Hours worked"?fInt(v):fInt(v));
+    const vt = (tg===null||c===null||tg===undefined)?"":(c<=tg?"On target":"Above target");
+    y+=`<tr><td class="l"><b>${n}</b></td><td>${fm(p)}</td><td><b>${fm(c)}</b></td><td class="${tr==="Better"?"better":tr==="Worse"?"worse":""}">${ch===null?"–":(ch>0?"+":"")+(isRate?ch.toFixed(2):fInt(ch))}</td><td>${fPct(chp)}</td><td>${tr?(["Better","Worse"].includes(tr)?pill(tr):`<span class="pill p-info">${tr}</span>`):""}</td><td>${tg!==null&&tg!==undefined?tg:""}</td><td>${vt?pill(vt):""}</td><td>${isRate?pill(provY?"Provisional":"OK"):""}</td></tr>`;
+  });
+  $("tblYoY").innerHTML=y+"</tbody>";
+}
+
+function renderCompare(chk){
+  const RM=state.month,T=state.tgt;
+  $("cmpTitle").textContent=`YTD Jan-${MONTHS[RM-1]} ${REP_YEAR}`;
+  const rowsOf = key=>{ const y=ytd(monthly(key,REP_YEAR),RM); return {y,ltif:rate(y.LTI,y.H),trir:rate(y.LTI+y.MTI,y.H),sr:rate(y.LD,y.H),prov:provisional(key,REP_YEAR)}; };
+  let t=`<thead><tr><th class="l">Location</th><th>Data check</th><th>Hours YTD</th><th>LTI</th><th>MTI</th><th>FAI</th><th>Near Miss</th><th>Hazard reports</th><th>Lost days</th><th>LTIF</th><th>TRIR</th><th>Severity</th><th>Data</th></tr></thead><tbody>`;
+  const all=[];
+  COUNTRIES.forEach(c=>{ const r=rowsOf(c); all.push({c,...r}); const st=chk.find(x=>x.c===c).overall;
+    const cl=(v,tg)=>v!==null&&tg!==null&&v>tg?"hl":"";
+    t+=`<tr><td class="l"><b>${c}</b> <span class="muted">${SITES.find(s=>s.country===c).site}</span></td><td>${pill(st)}</td><td>${r.y.H?fInt(r.y.H):"—"}</td><td>${r.y.LTI}</td><td>${r.y.MTI}</td><td>${r.y.FAI}</td><td>${r.y.NM}</td><td>${r.y.HAZ}</td><td>${r.y.LD}</td><td class="${cl(r.ltif,T.LTIF)}">${f2(r.ltif)}</td><td class="${cl(r.trir,T.TRIR)}">${f2(r.trir)}</td><td class="${cl(r.sr,T.SR)}">${f2(r.sr)}</td><td>${r.y.H?pill(r.prov?"Provisional":"OK"):pill("MISSING")}</td></tr>`; });
+  const R=rowsOf("*");
+  t+=`<tr class="reg"><td class="l">REGION (from totals)</td><td></td><td>${fInt(R.y.H)}</td><td>${R.y.LTI}</td><td>${R.y.MTI}</td><td>${R.y.FAI}</td><td>${R.y.NM}</td><td>${R.y.HAZ}</td><td>${R.y.LD}</td><td>${f2(R.ltif)}</td><td>${f2(R.trir)}</td><td>${f2(R.sr)}</td><td>${pill(R.prov?"Provisional":"OK")}</td></tr>`;
+  if(T.LTIF!==null) t+=`<tr><td class="l muted">Target</td><td colspan="8"></td><td>${T.LTIF}</td><td>${T.TRIR??""}</td><td>${T.SR??""}</td><td></td></tr>`;
+  $("tblCompare").innerHTML=t+"</tbody>";
+  const withData=all.filter(a=>a.ltif!==null);
+  const avg=withData.length?withData.reduce((s,a)=>s+a.ltif,0)/withData.length:null;
+  const avgS=withData.length?withData.reduce((s,a)=>s+a.sr,0)/withData.length:null;
+  $("avgWarn").innerHTML = `<b>Why the region is calculated from totals:</b> the simple average of location LTIFs would be <b>${f2(avg)}</b> (severity ${f2(avgS)}), but the correct regional LTIF is <b>${f2(R.ltif)}</b> (severity ${f2(R.sr)}). Averaging gives a small location the same weight as a large one — ${SITES[0].country} works ~${fInt(SITES[0].hours/1000)}k h/month while ${SITES[1].country} works ~${fInt(SITES[1].hours/1000)}k h/month.${R.prov?` Rates are <b>Provisional</b> because at least one location has missing hours.`:""}`;
+  const items=k=>[...all.map(a=>({name:a.c,v:a[k],prov:a.prov&&a[k]!==null})),{name:"Region",v:R[k],region:true,prov:R.prov}];
+  $("chCmpLTIF").innerHTML=hbarChart(items("ltif"),T.LTIF,"LTIF by location");
+  $("chCmpSR").innerHTML=hbarChart(items("sr"),T.SR,"Severity rate by location");
+}
+
+/* data tab */
+const DCOLS = {
+  inc:["Country","SourceFile","IncidentID","Date","Type","RiskFamily","Exclude","ActionStatus","DueDate","LostDays","Counted","ActionState","Why"],
+  haz:["Country","SourceFile","HazardID","Date","Area","RiskFamily","Status","DueDate","CompletionDate","Counted","FirstOfHazard","ActionState","Why"],
+  hrs:["Country","SourceFile","Year","MonthNo","Hours"],
+  sub:["Country","Site","ReportingYear","ReportingMonth","Status","TemplateVersion","SourceFile","DateModified","ExampleHours"]
+};
+function dataRows(){
+  const tb=$("fTable").value, loc=$("fLoc").value, yr=$("fYear").value, cn=$("fCnt").value;
+  let rows = tb==="inc"?D.inc.map(r=>Object.assign({},r,{Why:whyInc(r)})):tb==="haz"?D.haz.map(r=>Object.assign({},r,{Why:whyHaz(r)})):tb==="hrs"?D.hrs:D.sub;
+  if(loc) rows=rows.filter(r=>r.Country===loc);
+  if(yr && tb!=="sub") rows=rows.filter(r=>String(r.Year)===yr);
+  if(cn!=="" && (tb==="inc"||tb==="haz")) rows=rows.filter(r=>String(r.Counted)===cn);
+  return {tb,rows};
+}
+function renderData(){
+  const {tb,rows}=dataRows(), cols=DCOLS[tb], LIMIT=600;
+  $("fCnt").disabled = !(tb==="inc"||tb==="haz"); $("fYear").disabled = tb==="sub";
+  $("dataCount").textContent = `${rows.length.toLocaleString()} rows${rows.length>LIMIT?` (showing first ${LIMIT}; download CSV for all)`:""}`;
+  let h="<thead><tr>"+cols.map(c=>`<th class="l">${c}</th>`).join("")+"</tr></thead><tbody>";
+  rows.slice(0,LIMIT).forEach(r=>{ h+="<tr>"+cols.map(c=>{ let v=r[c]; if(["Date","DueDate","CompletionDate"].includes(c)) v=fmtDate(v); if(c==="Hours") v=fInt(v);
+      const cls = c==="Why"&&v!=="Counted"?(String(v).startsWith("Excluded")?"hl-w":"hl"):(c==="Counted"&&v===0?"hl-w":"");
+      return `<td class="l ${cls}">${esc(v)}</td>`; }).join("")+"</tr>"; });
+  if(!rows.length) h+=`<tr><td class="l muted" colspan="${cols.length}">No rows for this filter.</td></tr>`;
+  $("tblData").innerHTML=h+"</tbody>";
+}
+function downloadCsv(){
+  const {tb,rows}=dataRows(), cols=DCOLS[tb];
+  const q=v=>{const s=String(v===null||v===undefined?"":v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csv=[cols.join(",")].concat(rows.map(r=>cols.map(c=>q(r[c])).join(","))).join("\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=`consolidated_${tb}.csv`; document.body.appendChild(a); a.click(); a.remove();
+}
+
+function renderAll(){
+  refresh();
+  const chk=dataCheck();
+  renderFlow(chk); renderCheck(chk); renderReport(); renderCompare(chk); renderData();
+  $("swFix").classList.toggle("on",state.fixed);
+}
+
+/* ================= INIT ================= */
+function init(){
+  $("selMonth").innerHTML = MONTHS_L.slice(0,MAX_MONTH).map((m,i)=>`<option value="${i+1}" ${i+1===state.month?"selected":""}>${m} ${REP_YEAR}</option>`).join("");
+  $("selView").innerHTML = `<option value="*">Region (all locations)</option>`+SITES.map(s=>`<option value="${s.country}">${s.country} · ${s.site}</option>`).join("");
+  $("fLoc").innerHTML = `<option value="">All</option>`+COUNTRIES.map(c=>`<option>${c}</option>`).join("");
+  $("selMonth").addEventListener("change",e=>{state.month=Math.min(MAX_MONTH,Math.max(1,parseInt(e.target.value,10)||MAX_MONTH));renderAll();});
+  $("selView").addEventListener("change",e=>{state.view=e.target.value;renderReport();});
+  $("chkFix").addEventListener("change",e=>{state.fixed=e.target.checked;renderAll();});
+  [["tLTIF","LTIF"],["tTRIR","TRIR"],["tSR","SR"]].forEach(([id,k])=>$(id).addEventListener("input",e=>{
+    const v=parseFloat(e.target.value); state.tgt[k]=(isFinite(v)&&v>=0)?Math.min(v,1000):null; renderReport(); renderCompare(dataCheck());
+  }));
+  ["fTable","fLoc","fYear","fCnt"].forEach(id=>$(id).addEventListener("change",renderData));
+  $("btnCsv").addEventListener("click",downloadCsv);
+  $("btnPrint").addEventListener("click",()=>window.print());
+  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="p-"+b.dataset.tab));
+  }));
+  renderAll();
+}
+init();
+})();
+</script>
+</body>
+</html>
